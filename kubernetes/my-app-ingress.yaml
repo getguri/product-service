@@ -1,0 +1,42 @@
+# D:\product-service\kubernetes\my-app-ingress.yaml
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-app-ingress
+  annotations:
+    # This annotation is important for NGINX Ingress Controller.
+    # It tells NGINX to rewrite the URL path before sending it to the backend service.
+    # For example, if browser requests http://localhost:30231/users/some_id
+    # the backend service (user-service) will receive a request for /some_id
+    # or if browser requests http://localhost:30231/products/item_id
+    # the backend service (product-service) will receive a request for /item_id
+    # Adjust this if your services expect the full path.
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  # This specifies which Ingress Controller should handle this Ingress resource.
+  # Ensure it matches the name configured in your Ingress Controller deployment (commonly 'nginx').
+  ingressClassName: nginx
+  rules:
+  - host: localhost # This means you'll access it via localhost from your browser
+
+    http:
+      paths:
+      # Rule for the user-service
+      - path: /users(/|$)(.*) # Matches /users, /users/, /users/123 etc.
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: user-service # The name of your user-service Kubernetes Service
+            port:
+              number: 80 # The port that your user-service Kubernetes Service exposes
+                         # (e.g., if your user-service Service has port: 80 and targetPort: 8080)
+      # Rule for the product-service
+      - path: /products(/|$)(.*) # Matches /products, /products/, /products/item_id etc.
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: product-service # The name of your product-service Kubernetes Service
+            port:
+              number: 80 # The port that your product-service Kubernetes Service exposes
+                         # (e.g., if your product-service Service has port: 80 and targetPort: 8080)
